@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manuel Nanzer — Full Stack Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07070e;
+      --surface: #0d0d1a;
+      --border: #1a1a2e;
+      --accent: #b4ff57;
+      --accent-dim: rgba(180, 255, 87, 0.08);
+      --accent-glow: rgba(180, 255, 87, 0.15);
+      --text: #ddddf0;
+      --muted: #6a6a88;
+      --dim: #2e2e48;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Noise overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.5;
+    }
+
+    /* Ambient orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: rgba(180,255,87,0.03); top: -200px; right: -150px; }
+    .orb-2 { width: 450px; height: 450px; background: rgba(80,80,200,0.04); bottom: 10%; left: -150px; }
+
+    /* Layout */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      padding: 1.1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(7, 7, 14, 0.75);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 7rem 0 4rem;
+      border: none !important;
+    }
+
+    .hero-inner {
+      width: 100%;
+    }
+
+    .hero-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.2s forwards;
+    }
+    .hero-badge::before {
+      content: '';
+      display: inline-block;
+      width: 28px; height: 1px;
+      background: var(--accent);
+    }
+
+    h1.hero-name {
+      font-size: clamp(3.8rem, 10vw, 7.5rem);
+      font-weight: 800;
+      line-height: 0.92;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.8rem;
+      opacity: 0;
+      animation: fadeUp 0.7s ease 0.35s forwards;
+    }
+    h1.hero-name .last { color: var(--accent); }
+
+    .hero-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 1.8rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.5s forwards;
+    }
+    .hero-sub .dot { color: var(--dim); }
+    .hero-sub .avail { color: var(--accent); }
+
+    .hero-cursor {
+      display: inline-block;
+      width: 2px; height: 1em;
+      background: var(--accent);
+      margin-left: 4px;
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 580px;
+      line-height: 1.75;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.65s forwards;
+    }
+
+    .hero-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease 0.8s forwards;
+    }
+
+    .chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: all 0.2s;
+      background: transparent;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .chip.cta {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .chip.cta:hover { background: transparent; color: var(--accent); }
+
+    /* SECTIONS */
+    section {
+      padding: 5rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.8rem;
+    }
+    .sec-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+    }
+    .sec-title {
+      font-size: 1.9rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+    .sec-line { flex: 1; height: 1px; background: var(--border); }
+
+    /* EXPERIENCE */
+    .exp-item {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 2rem;
+      padding: 2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .exp-item:last-child { border-bottom: none; }
+
+    .exp-meta { padding-top: 0.15rem; }
+    .exp-date {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.67rem;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+    .exp-company {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .exp-duration {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--dim);
+      margin-top: 0.25rem;
+    }
+    .exp-role {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.7rem;
+      line-height: 1.25;
+    }
+    .exp-role .hi { color: var(--accent); }
+    .exp-text {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .exp-link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .exp-link:hover { text-decoration: underline; }
+
+    /* SKILLS */
+    .skills-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 2.5rem;
+    }
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 0.38rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .tag:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+    /* AI BOX */
+    .ai-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .ai-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 40%, transparent 100%);
+    }
+    .ai-box-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .ai-box-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .ai-box-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      max-width: 560px;
+    }
+    .ai-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .ai-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      padding: 0.28rem 0.7rem;
+      background: var(--accent-dim);
+      border: 1px solid rgba(180,255,87,0.18);
+      border-radius: 2px;
+      color: var(--accent);
+    }
+
+    /* EDUCATION */
+    .edu-grid, .edu-flex {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .edu-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1.4rem 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .edu-card:hover { border-color: var(--accent); }
+    .edu-year {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--accent);
+      margin-bottom: 0.45rem;
+    }
+    .edu-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+    .edu-inst {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 0;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-copy {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--dim);
+    }
+    .footer-mail {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .footer-mail a { color: var(--accent); text-decoration: none; }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.show { opacity: 1; transform: none; }
+
+    .stagger > * {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    .stagger.show > * { opacity: 1; transform: none; }
+    .stagger.show > *:nth-child(1) { transition-delay: 0s; }
+    .stagger.show > *:nth-child(2) { transition-delay: 0.07s; }
+    .stagger.show > *:nth-child(3) { transition-delay: 0.14s; }
+    .stagger.show > *:nth-child(4) { transition-delay: 0.21s; }
+    .stagger.show > *:nth-child(5) { transition-delay: 0.28s; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .exp-item { grid-template-columns: 1fr; gap: 0.6rem; }
+      .edu-grid, .edu-flex { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      h1.hero-name { font-size: clamp(3rem, 14vw, 5rem); }
+      .hero-avatar { width: 96px; height: 96px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<nav>
+  <div class="nav-logo">manolo.dev</div>
+  <ul class="nav-links">
+    <li><a href="#experiencia">Experiencia</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#educacion">Educación</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="container">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-badge">Full Stack Developer &amp; CTO</div>
+          <h1 class="hero-name">
+            <span>Manuel<br></span><span class="last">Nanzer</span>
+          </h1>
+          <div class="hero-sub">
+            <span>Córdoba, Argentina</span>
+            <span class="dot">·</span>
+            <span class="avail">Disponible full-time</span>
+            <span class="hero-cursor"></span>
+          </div>
+          <p class="hero-desc">
+            Desarrollador Full Stack JS con más de 4 años en proyectos reales. Fundador y CTO de Meteoryd — ecosistema SaaS con ERP, CRM, Agente IA WhatsApp, Ecommerce y RRHH. A la vanguardia del ecosistema IA: agentes con MCP, plugins y prompt engineering avanzado.
+          </p>
+          <div class="hero-links">
+            <a href="mailto:manuelnanzer@gmail.com" class="chip cta">✉ manuelnanzer@gmail.com</a>
+            <a href="https://linkedin.com/in/manuelnanzer" class="chip" target="_blank">LinkedIn ↗</a>
+            <a href="https://github.com/NanzerProgramming" class="chip" target="_blank">GitHub ↗</a>
+            <a href="https://wa.link/fetfqc" class="chip" target="_blank">WhatsApp ↗</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXPERIENCIA -->
+    <section id="experiencia">
+      <div class="sec-head reveal">
+        <span class="sec-num">01</span>
+        <h2 class="sec-title">Experiencia</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="stagger" id="exp-list">
+
+        <div class="exp-item">
+          <div class="exp-meta">
+            <div class="exp-date">08/2025 — Presente</div>
+            <div class="exp-company">Meteoryd</div>
+            <div class="exp-duration">9 meses</div>
+          </div>
+          <div>
+            <div class="exp-role">Fundador &amp; <span class="hi">CTO</span></div>
+            <div class="exp-text">
+              Diseño y desarrollo de ecosistema SaaS modular con IA: ERP, CRM, Ecommerce, RRHH y Agente IA WhatsApp. Arquitectura de agentes de IA con MCP (Model Context Protocol), plugins e integraciones con Meta. Prompt engineering avanzado con Claude y ChatGPT. La plataforma centraliza operaciones y convierte datos en reportes y alertas accionables.
+            </div>
+          </div>
+        </div>
+
+        <div class="exp-item">
+          <div class="exp-meta">
+            <div class="exp-date">02/2025 — 08/2025</div>
+            <div class="exp-company">VELAONE · USA</div>
+            <div class="exp-duration">7 meses</div>
+          </div>
+          <div>
+            <div class="exp-role">Dev <span class="hi">React.js</span></div>
+            <div class="exp-text">
+              Desarrollo de interfaces modernas con React.js para cliente internacional. Trabajo en equipo distribuido de forma remota bajo estándares del mercado tech americano.
+              <br><a href="https://www.vela1.com/" class="exp-link" target="_blank">vela1.com ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="exp-item">
+          <div class="exp-meta">
+            <div class="exp-date">09/2024 — 02/2025</div>
+            <div class="exp-company">Dicsys S.A.</div>
+            <div class="exp-duration">6 meses</div>
+          </div>
+          <div>
+            <div class="exp-role">Full Stack <span class="hi">Node + Angular</span></div>
+            <div class="exp-text">
+              Desarrollo de soluciones escalables con Node.js, Next.js y Angular en equipo ágil y multidisciplinario con ciclos de entrega cortos.
+            </div>
+          </div>
+        </div>
+
+        <div class="exp-item">
+          <div class="exp-meta">
+            <div class="exp-date">10/2022 — 09/2024</div>
+            <div class="exp-company">Dicsys S.A.</div>
+            <div class="exp-duration">2 años</div>
+          </div>
+          <div>
+            <div class="exp-role">Dev <span class="hi">.NET</span></div>
+            <div class="exp-text">
+              Desarrollo web con C# .NET para proyectos de CNH Industrial. Soluciones personalizadas para cliente multinacional. Formación en Analytics, Data Science, Machine Learning y QA (Dicsys Academy).
+              <br><a href="https://www.dicsys.ai/" class="exp-link" target="_blank">dicsys.ai ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="exp-item">
+          <div class="exp-meta">
+            <div class="exp-date">2024</div>
+            <div class="exp-company">Institución Cervantes</div>
+            <div class="exp-duration">Proyecto final</div>
+          </div>
+          <div>
+            <div class="exp-role"><span class="hi">AgroRegister</span> — Tesis</div>
+            <div class="exp-text">
+              Plataforma web para la gestión agrícola integral. Stack: Node.js, Nest.js, Angular, MySQL, APIs REST.
+              <br><a href="https://www.cervantes.edu.ar/" class="exp-link" target="_blank">cervantes.edu.ar ↗</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="skills">
+      <div class="sec-head reveal">
+        <span class="sec-num">02</span>
+        <h2 class="sec-title">Stack técnico</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="skills-wrap reveal">
+        <span class="tag">JavaScript</span>
+        <span class="tag">TypeScript</span>
+        <span class="tag">Angular</span>
+        <span class="tag">React</span>
+        <span class="tag">Node.js</span>
+        <span class="tag">Next.js</span>
+        <span class="tag">Express.js</span>
+        <span class="tag">SQL</span>
+        <span class="tag">MySQL</span>
+        <span class="tag">PostgreSQL</span>
+        <span class="tag">Docker</span>
+        <span class="tag">Git / GitHub / GitLab</span>
+        <span class="tag">Stack MERN</span>
+        <span class="tag">APIs REST</span>
+        <span class="tag">SCRUM</span>
+        <span class="tag">SERVER LINUX</span>
+      </div>
+
+      <div class="ai-box reveal">
+        <div class="ai-box-label">⬡ Inteligencia Artificial</div>
+        <div class="ai-box-title">Ecosistema IA — Vanguardia</div>
+        <div class="ai-box-text">
+          Construyo agentes con MCP (Model Context Protocol), plugins e integraciones con Meta. Diseño skills y sistemas de prompts avanzados. Uso Claude, ChatGPT, Cursor y VSCode en el flujo de desarrollo diario.
+        </div>
+        <div class="ai-tags">
+          <span class="ai-tag">Claude</span>
+          <span class="ai-tag">ChatGPT</span>
+          <span class="ai-tag">Cursor</span>
+          <span class="ai-tag">MCP</span>
+          <span class="ai-tag">OpenAI API</span>
+          <span class="ai-tag">Meta Business</span>
+          <span class="ai-tag">N8n</span>
+          <span class="ai-tag">Prompt Engineering</span>
+          <span class="ai-tag">AI Agents</span>
+          <span class="ai-tag">Skills personalizadas</span>
+          <span class="ai-tag">Plugins</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDUCACIÓN -->
+    <section id="educacion">
+      <div class="sec-head reveal">
+        <span class="sec-num">03</span>
+        <h2 class="sec-title">Educación</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="edu-flex stagger" id="edu-list">
+        <div class="edu-card">
+          <div class="edu-year">2021 — 2024</div>
+          <div class="edu-title">Analista en Sistemas de Computación</div>
+          <div class="edu-inst">Institución Cervantes</div>
+        </div>
+        <div class="edu-card">
+          <div class="edu-year">2022</div>
+          <div class="edu-title">Analytics, Data Science &amp; Machine Learning</div>
+          <div class="edu-inst">Dicsys Academy</div>
+        </div>
+        <div class="edu-card">
+          <div class="edu-year">2020</div>
+          <div class="edu-title">PHP y MySQL</div>
+          <div class="edu-inst">UTN FRBA</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACTO -->
+    <section id="contacto">
+      <div class="sec-head reveal">
+        <span class="sec-num">04</span>
+        <h2 class="sec-title">Contacto</h2>
+        <div class="sec-line"></div>
+      </div>
+
+      <div class="reveal" style="display:flex; flex-direction:column; gap:0.75rem;">
+        <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+          <a href="mailto:manuelnanzer@gmail.com" class="chip" style="font-size:0.82rem;">✉ manuelnanzer@gmail.com</a>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:0.6rem;">
+          <a href="https://linkedin.com/in/manuelnanzer" class="chip" target="_blank">LinkedIn ↗</a>
+          <a href="https://github.com/NanzerProgramming" class="chip" target="_blank">GitHub ↗</a>
+          <a href="https://wa.link/fetfqc" class="chip" target="_blank">WhatsApp ↗</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-copy">© 2026 Manuel Nanzer</div>
+      <div class="footer-mail">Córdoba, Argentina · <a href="mailto:manuelnanzer@gmail.com">manuelnanzer@gmail.com</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('show');
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal, .stagger').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
